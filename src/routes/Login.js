@@ -69,7 +69,7 @@ function Login () {
               </div>
               <div className="text-center">
                 <Button
-                className="my-4" color="primary" type="button">
+                className="my-4" variant="info" type="button">
                   LOGIN
                 </Button>
               </div>

@@ -60,8 +60,8 @@ function Signup () {
               </FormGroup>
               <div className="text-center">
                 <Button
-                className="my-4" color="primary" type="button">
-                  LOGIN
+                className="my-4" variant="info" type="button">
+                  SIGNUP
                 </Button>
               </div>
               <div className="text-center">
