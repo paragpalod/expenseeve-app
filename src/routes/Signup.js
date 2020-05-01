@@ -68,7 +68,7 @@ const Styles = styled.div`
   }
 `;
 
-function Signup () {
+function Signup (props) {
 
   const [username, setUsername] = useState('');
   const [name, setName] = useState('');
@@ -82,9 +82,9 @@ function Signup () {
 
   useEffect(() => {
     if (localStorage.getItem('token') || sessionStorage.getItem('token')) {
-      this.props.history.push('/admin/dashboard');
+      props.history.push('/home');
     }
-  },[])
+  },[])//eslint-disable-line
 
   async function submitSignupForm (ev) {
     ev.preventDefault();
