@@ -84,6 +84,38 @@ function Signup (props) {
     if (localStorage.getItem('token') || sessionStorage.getItem('token')) {
       props.history.push('/home');
     }
+
+    async function validateSession() {
+      let token;
+      if (localStorage.getItem('token')) {
+        token = localStorage.getItem('token');
+      } else if (sessionStorage.getItem('token')) {
+        token = sessionStorage.getItem('token');
+      }
+      if (token) {
+        try {
+          let SessionInfo = await API.get(`/validateSession/${token}`);
+          if (SessionInfo.data && SessionInfo.data.token) {
+            if (localStorage.getItem('token')) {
+              localStorage.setItem('token' , SessionInfo.data.token);
+            } else if (sessionStorage.getItem('token')) {
+              sessionStorage.setItem('token' , SessionInfo.data.token);
+            }
+            props.history.push('/home');
+          }
+        } catch (Exception) {
+          await API.delete('/logout');
+          delete API.defaults.headers.common['Authorization'];
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+      } else {
+        localStorage.clear();
+      }
+    }
+
+    validateSession();
+
   },[])//eslint-disable-line
 
   async function submitSignupForm (ev) {
