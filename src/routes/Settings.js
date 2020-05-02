@@ -1,5 +1,5 @@
-import React , { useState } from 'react';
-import { Container , Row , Col , InputGroup , FormControl , Button, Card, Table} from 'react-bootstrap';
+import React , { useEffect , useState } from 'react';
+import { Container , Row , Col , InputGroup , FormControl , Button, Card, Table, Modal} from 'react-bootstrap';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import styled from 'styled-components';
@@ -54,14 +54,44 @@ const Styles = styled.div`
     font-size: 11px;
     margin-left: 0px
   }
+
+  .inactiveRow {
+    color: red;
+    background-color: #c5c5c4;
+  }
 `;
 
 function Settings () {
   const [userInfo] = useState(JSON.parse(localStorage.getItem('userInfo')));
+
+  // update budget
   const [totalBudget , setTotalBudget] = useState(userInfo && userInfo.totalBudget ? userInfo.totalBudget : '');
-  const [category , setCategory] = useState('');
   const [totalBudgetError, setTotalBudgetError] = useState(false);
+
+  // creatte category
+  const [category , setCategory] = useState('');
   const [categoryError, setCategoryError] = useState(false);
+
+  // for get category list functionality
+  const [categoryList, setCategoryList] = useState([]);
+
+
+  // for activate and deactivate category functionality
+  const [isConfirmationModelOpen, setIsConfirmationModelOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState({});
+
+  useEffect(() => {
+    getCategories();
+  }, [])//eslint-disable-line
+
+  async function getCategories () {
+    let Response = await API.get(`/categories?userID=${userInfo._id}`);
+
+    if (Response.data) {
+      console.log(Response.data);
+      setCategoryList(Response.data);
+    }
+  }
 
   async function updateTotalBudget () {
     try {
@@ -88,8 +118,10 @@ function Settings () {
       if (!category) {
         setCategoryError(true);
       } else {
-        let Response = await API.put(`/createCategory` , { category , userID: userInfo._id });
+        let Response = await API.post(`/category` , { name: category , userID: userInfo._id });
         if (Response.data) {
+          setCategory('');
+          getCategories();
           Toaster('Category Created Successfully', 'success');
         }
       }
@@ -102,6 +134,21 @@ function Settings () {
     }
   }
 
+  async function activateOrDeactivateCategory (categoryID, action) {
+    try {
+      let Response = await API.put(`/category/${categoryID}/${action}`);
+      if (Response.data) {
+        getCategories();
+        Toaster(`Category ${action}d successfully`, 'success');
+      }
+    } catch (Exception) {
+      if (Exception && Exception.response) {
+        Toaster(Exception.response.data.message, 'error');
+      } else if (Exception && Exception.message){
+        Toaster(Exception.message, 'error');
+      }
+    }
+  }
 
   return  (
     <Styles className="example" >
@@ -177,7 +224,7 @@ function Settings () {
         </Row>
         <Row>
           <Card body className="tableCard">
-          <Table className="table" striped responsive>
+          <Table className="table" responsive>
               <thead>
                 <tr>
                   <th>#</th>
@@ -187,58 +234,65 @@ function Settings () {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>1</td>
-                  <td>Mark</td>
-                  <td>Otto</td>
-                  <td>@mdo</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Jacob</td>
-                  <td>Thornton</td>
-                  <td>@fat</td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td colSpan="2">Larry the Bird</td>
-                  <td>@twitter</td>
-                </tr>
+              {
+                categoryList.map ( (category , index) => (
+                  <tr className={!category.deletedAt ? '' : 'inactiveRow'}>
+                    <td>{index+1}</td>
+                    <td>{category.name}</td>
+                    <td>{!category.deletedAt ? 'Active' : 'Inactive'}</td>
+                    <td >
+                      <Button
+                        variant={!category.deletedAt ? 'danger' : 'info'}
+                        onClick={() => {
+                          setIsConfirmationModelOpen(true);
+                          setSelectedCategory(category);
+                        }}
+                      >
+                        {!category.deletedAt ? 'Delete' : 'Restore'}
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              }
               </tbody>
             </Table>
           </Card>
         </Row>
       </Container>
+      <Modal
+        show={isConfirmationModelOpen}
+        onHide={() => {
+          setIsConfirmationModelOpen(false);
+          setSelectedCategory({});
+        }}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Action Confirmation</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to
+          {!selectedCategory.deletedAt ? ' deactivate' : ' activate'} category?
+        </Modal.Body>
+        <Modal.Footer className="textCenter">
+          <Button variant="secondary" onClick={() => {
+            setIsConfirmationModelOpen(false);
+            setSelectedCategory({});
+          }}>
+            No
+          </Button>
+          <Button variant="primary" onClick={() => {
+            activateOrDeactivateCategory(
+              selectedCategory._id ,
+              !selectedCategory.deletedAt ? 'deactivate' : 'activate'
+            );
+            setIsConfirmationModelOpen(false);
+            setSelectedCategory({});
+          }}>
+            Yes
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Styles>
   )
 }
