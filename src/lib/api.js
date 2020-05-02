@@ -1,5 +1,4 @@
 import axios from 'axios';
-
 const instance = axios.create({
   baseURL: `http://localhost:8080/api`
 });
@@ -21,9 +20,7 @@ instance.interceptors.response.use(function (response) {
     if ( err && err.response && err.response.status === 401 && err.config && !err.config.__isRetryRequest ) {
         localStorage.clear();
         sessionStorage.clear();
-        instance.post('/logout');
-        delete axios.defaults.headers['authorization'];
-        this.props.history.push('/');
+        window.location.pathname = '/login'
     } else if ( err && err.response && err.response.status === 500 ) {
         // history.push({pathname:'/pages/errors/error-500'});
         console.log(err.response.data)
