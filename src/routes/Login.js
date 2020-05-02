@@ -71,7 +71,8 @@ function Login (props) {
       if (token) {
         try {
           let SessionInfo = await API.get(`/validateSession/${token}`);
-          if (SessionInfo.data && SessionInfo.data.token) {
+          if (SessionInfo.data && SessionInfo.data.token && SessionInfo.data.user) {
+            localStorage.setItem('userInfo' , JSON.stringify(SessionInfo.data.user));
             if (localStorage.getItem('token')) {
               localStorage.setItem('token' , SessionInfo.data.token);
             } else if (sessionStorage.getItem('token')) {
@@ -103,7 +104,8 @@ function Login (props) {
     } else {
       try {
         let LoginInfo = await API.post('/login' , { username , password });
-        if (LoginInfo.data && LoginInfo.data.token) {
+        if (LoginInfo.data && LoginInfo.data.token && LoginInfo.data.user) {
+          localStorage.setItem('userInfo' , JSON.stringify(LoginInfo.data.user));
           if (isRememberMe) {
             localStorage.setItem('token' , LoginInfo.data.token);
           } else {

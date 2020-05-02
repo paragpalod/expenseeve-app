@@ -95,7 +95,8 @@ function Signup (props) {
       if (token) {
         try {
           let SessionInfo = await API.get(`/validateSession/${token}`);
-          if (SessionInfo.data && SessionInfo.data.token) {
+          if (SessionInfo.data && SessionInfo.data.token && SessionInfo.data.user) {
+            localStorage.setItem('userInfo' , JSON.stringify(SessionInfo.data.user));
             if (localStorage.getItem('token')) {
               localStorage.setItem('token' , SessionInfo.data.token);
             } else if (sessionStorage.getItem('token')) {
