@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import API from '../lib/api';
 import Toaster from '../lib/toaster';
 import { formatDateTime , formatDateForHtmlForm } from '../lib';
+import Chart from 'chart.js';
 
 const Styles = styled.div`
 
@@ -30,21 +31,25 @@ const Styles = styled.div`
 
   .chartCard {
     height: 220px;
-    overflow: hidden
+    overflow: scroll;
+  }
+
+  .chartCard::-webkit-scrollbar {
+    display: none;
   }
 
   .card-header {
     font-weight: 600;
   }
 
-  .table {
+  .expenseTable {
     margin: 0px auto;
     width: 1060px;
     height: 255px;
     overflow: scroll;
   }
 
-  .table::-webkit-scrollbar {
+  .expenseTable::-webkit-scrollbar {
     display: none;
   }
 
@@ -58,6 +63,17 @@ const Styles = styled.div`
     background-color: #c5c5c4;
   }
 
+  .expenseDoughnutChartDiv {
+    width: 140px;
+    height: 140px;
+    margin-left: 50px
+  }
+
+  .expensePieChartDiv {
+    width: 270px;
+    height: 140px;
+    margin-left: 100px;
+  }
 `;
 
 function Home (props) {
@@ -74,6 +90,7 @@ function Home (props) {
 
   // for get category list functionality
   const [categoryList, setCategoryList] = useState([]);
+  const [categoryListForDeactivatedCategory, setCategoryListForDeactivatedCategory] = useState([]);
 
   // for get expense list
   const [expenseList, setExpenseList] = useState([]);
@@ -85,16 +102,64 @@ function Home (props) {
   const [isConfirmationModelOpen, setIsConfirmationModelOpen] = useState(false);
   const [ selectedExpense , setSelectedExpense] = useState({});
 
+  //for donut chart, pie chart or table exoense overview
+  const [totalSpending , setTotalSpending] = useState(0);
+  const [categoryListForPieChart , setCategoryListForPieChart] = useState([]);
+  const [categoryWiseExpenseListForPieChart , setCategoryWiseExpenseListForPieChart] = useState([]);
+
   useEffect(() => {
     getCategories();
     getExpenses();
+    getAllCategories();
   }, [])//eslint-disable-line
+
+  useEffect(() => {
+    let total = 0;
+    expenseList.map(i => {//eslint-disable-line
+      if (!i.deletedAt) total += i.amount;
+    })
+    setTotalSpending(total);
+
+    function createCategoryWiseSpending () {
+      let categoryName = [];
+      let categoryWiseExpense = []
+      categoryList.map( category => {//eslint-disable-line
+        let total = 0;
+        expenseList.map( expense => {
+          if (expense.categoryID === category._id && !expense.deletedAt) {
+            total += expense.amount;
+          }
+        })
+        categoryName.push(category.name);
+        categoryWiseExpense.push(total)
+      })
+      setCategoryListForPieChart(categoryName);
+      setCategoryWiseExpenseListForPieChart(categoryWiseExpense);
+    }
+
+    if (categoryList.length < 6) {
+      createCategoryWiseSpending()
+    }
+  },[expenseList])//eslint-disable-line
+
+  useEffect(() => {
+    renderExpenseDoughnutChart();
+    renderExpensePieChart();
+  }, [totalSpending])//eslint-disable-line
 
   async function getCategories () {
     let Response = await API.get(`/categories?userID=${userInfo._id}&activationStatus=active`);
 
     if (Response.data) {
       setCategoryList(Response.data);
+    }
+  }
+
+  async function getAllCategories () {
+    let Response = await API.get(`/categories?userID=${userInfo._id}`);
+
+    if (Response.data) {
+      setCategoryListForDeactivatedCategory(Response.data);
     }
   }
 
@@ -135,7 +200,7 @@ function Home (props) {
   }
 
   function getCategoryName(categoryID) {
-    let category = categoryList.filter(i => i._id === categoryID)[0];
+    let category = categoryListForDeactivatedCategory.filter(i => i._id === categoryID)[0];
     return category && category.name ? category.name : '-';
   }
 
@@ -155,6 +220,110 @@ function Home (props) {
     }
   }
 
+  function getSpendingForCategory(categoryID) {
+    let expenses = expenseList.filter( i => !i.deletedAt && i.categoryID === categoryID);
+    if (expenses.length) {
+      let total = 0;
+      expenses.map(i => {//eslint-disable-line
+        total += i.amount;
+      })
+      return total;
+    } else {
+      return 0;
+    }
+  }
+
+  function getSpendingForCategoryPercentage(categoryID) {
+    let expenses = expenseList.filter( i => !i.deletedAt && i.categoryID === categoryID);
+    if (expenses.length) {
+      let total = 0;
+      expenses.map(i => {//eslint-disable-line
+        total += i.amount;
+      })
+      return ((total/totalSpending) * 100).toFixed(2);
+    } else {
+      return 0;
+    }
+  }
+  function renderExpenseDoughnutChart() {
+    Chart.pluginService.register({
+      beforeDraw: function(chart) {
+        var width = chart.chart.width,
+            height = chart.chart.height,
+            ctx = chart.chart.ctx;
+
+        ctx.restore();
+        var fontSize = (height / 114).toFixed(2);
+        ctx.font = fontSize + "em sans-serif";
+        ctx.textBaseline = "middle";
+        if ((totalSpending/userInfo.totalBudget) * 100 > 0) {
+          var text = `${(totalSpending/userInfo.totalBudget) * 100} % Spent`,
+          textX = Math.round((width - ctx.measureText(text).width) / 2),
+          textY = height / 2;
+          ctx.fillText(text, textX, textY);
+          ctx.save();
+        }
+
+      }
+    });
+    new Chart(document.getElementById('expenseDoughnutChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Budget', 'Expense'],
+        datasets: [{
+            data: [
+              userInfo && userInfo.totalBudget ? userInfo.totalBudget : 0,
+              totalSpending ? totalSpending : 0
+            ],
+            backgroundColor: [
+                'rgba(15, 115, 255, 1)',
+                'rgba(199, 254, 253, 1)'
+            ],
+            borderColor: [
+                'rgba(15, 115, 255, 1)',
+                'rgba(199, 254, 253, 1)'
+            ],
+        }]
+    },
+    options: {
+      legend: {
+        display: false
+      },
+      tooltips: {
+        enabled: false
+      },
+      cutoutPercentage: 80
+    }
+  });
+  }
+
+  function renderExpensePieChart() {
+
+    const colors = [
+      'rgba(15, 115, 255, 1)',
+      'rgba(199, 254, 253, 1)',
+      'rgba(255, 33, 33, 1)',
+      'rgba(41, 255, 13, 1)',
+      'rgba(233, 255, 36, 1)'
+     ]
+    new Chart(document.getElementById('expensePieChart'), {
+    type: 'pie',
+    data: {
+        labels: categoryListForPieChart,
+        datasets: [{
+            data: categoryWiseExpenseListForPieChart,
+            backgroundColor: categoryListForPieChart.map((i,j) => colors[j]),
+            borderColor: categoryListForPieChart.map((i,j) => colors[j]),
+        }]
+    },
+    options: {
+      legend: {
+        position: 'right'
+      }
+    }
+  });
+  }
+
   return  (
     <Styles>
       <Header/>
@@ -165,7 +334,19 @@ function Home (props) {
             <Card className="chartCard" >
               <Card.Header className="textCenter">Budget overview</Card.Header>
               <Card.Body>
-              sayudfgkhdfjg
+              <Row>
+              <Col xs={6}>
+                <div className="expenseDoughnutChartDiv" >
+                  <canvas id="expenseDoughnutChart" width="200" height="200"></canvas>
+                </div>
+              </Col>
+              <Col xs={6}>
+              <h5 className="textCenter" > Total Budget </h5>
+              <h6 className="textCenter" >₹ {userInfo && userInfo.totalBudget ? userInfo.totalBudget : ''}</h6>
+              <h5 className="textCenter" > Total Expenses </h5>
+              <h6 className="textCenter" >₹ {totalSpending ? totalSpending : 0}</h6>
+              </Col>
+              </Row>
               </Card.Body>
             </Card>
           </Col>
@@ -173,7 +354,33 @@ function Home (props) {
             <Card className="chartCard">
               <Card.Header className="textCenter">Category wise split</Card.Header>
               <Card.Body>
-              sfgsdjfgnkdf.b
+              {
+                categoryList.length > 5 ?
+                <Table>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Total Spending</th>
+                        <th>Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {
+                      categoryList.map ( (category , index) => (
+                          <tr key={category._id}>
+                          <td>{category.name}</td>
+                          <td>{getSpendingForCategory(category._id)}</td>
+                          <td>{getSpendingForCategoryPercentage(category._id)}</td>
+                        </tr>
+                      ))
+                    }
+                    </tbody>
+                </Table>
+                :
+                <div className="expensePieChartDiv" >
+                  <canvas id="expensePieChart"></canvas>
+                </div>
+              }
               </Card.Body>
             </Card>
           </Col>
@@ -192,7 +399,7 @@ function Home (props) {
           </Button>
           </Col>
         </Row>
-        <Card className="table">
+        <Card className="expenseTable">
         <Row>
           <Col>
             <Table>

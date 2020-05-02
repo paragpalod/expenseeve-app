@@ -224,37 +224,37 @@ function Settings () {
         </Row>
         <Row>
           <Card body className="tableCard">
-          <Table className="table" responsive>
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Category Name</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-              {
-                categoryList.map ( (category , index) => (
-                  <tr className={!category.deletedAt ? '' : 'inactiveRow'} key={category._id}>
-                    <td>{index+1}</td>
-                    <td>{category.name}</td>
-                    <td>{!category.deletedAt ? 'Active' : 'Inactive'}</td>
-                    <td >
-                      <Button
-                        variant={!category.deletedAt ? 'danger' : 'info'}
-                        onClick={() => {
-                          setIsConfirmationModelOpen(true);
-                          setSelectedCategory(category);
-                        }}
-                      >
-                        {!category.deletedAt ? 'Delete' : 'Restore'}
-                      </Button>
-                    </td>
+            <Table className="table" responsive>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Category Name</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
-                ))
-              }
-              </tbody>
+                </thead>
+                <tbody>
+                {
+                  categoryList.map ( (category , index) => (
+                    <tr className={!category.deletedAt ? '' : 'inactiveRow'} key={category._id}>
+                      <td>{index+1}</td>
+                      <td>{category.name}</td>
+                      <td>{!category.deletedAt ? 'Active' : 'Inactive'}</td>
+                      <td >
+                        <Button
+                          variant={!category.deletedAt ? 'danger' : 'info'}
+                          onClick={() => {
+                            setIsConfirmationModelOpen(true);
+                            setSelectedCategory(category);
+                          }}
+                        >
+                          {!category.deletedAt ? 'Delete' : 'Restore'}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                }
+                </tbody>
             </Table>
           </Card>
         </Row>
