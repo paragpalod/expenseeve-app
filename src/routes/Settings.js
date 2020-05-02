@@ -236,7 +236,7 @@ function Settings () {
               <tbody>
               {
                 categoryList.map ( (category , index) => (
-                  <tr className={!category.deletedAt ? '' : 'inactiveRow'}>
+                  <tr className={!category.deletedAt ? '' : 'inactiveRow'} key={category._id}>
                     <td>{index+1}</td>
                     <td>{category.name}</td>
                     <td>{!category.deletedAt ? 'Active' : 'Inactive'}</td>
