@@ -114,7 +114,11 @@ function Login (props) {
           props.history.push('/home');
         }
       } catch (Exception){
-        Toaster(Exception.response.data.message, 'error');
+        if (Exception && Exception.response) {
+          Toaster(Exception.response.data.message, 'error');
+        } else if (Exception && Exception.message){
+          Toaster(Exception.message, 'error');
+        }
       }
     }
   }

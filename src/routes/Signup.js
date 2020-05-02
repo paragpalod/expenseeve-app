@@ -137,7 +137,11 @@ function Signup (props) {
         }
       }
     } catch (Exception){
-      Toaster(Exception.response.data.message, 'error');
+      if (Exception && Exception.response) {
+        Toaster(Exception.response.data.message, 'error');
+      } else if (Exception && Exception.message){
+        Toaster(Exception.message, 'error');
+      }
     }
   }
 
@@ -194,7 +198,7 @@ function Signup (props) {
               }
               {
                 username.length < 6 && username.length > 0 &&
-                <span className="errMessage" >Username length should be 6 charactors long name</span>
+                <span className="errMessage" >Username length should be 6 charactors long</span>
               }
               <FormGroup className={(password.length < 6 && password.length > 0) || passwordError ? "inputDivError" : ""}>
                 <InputGroup className="input-group-alternative">
@@ -218,7 +222,7 @@ function Signup (props) {
               }
               {
                 password.length < 6 && password.length > 0 &&
-                <span className="errMessage" >Password length should be 6 charactors long name</span>
+                <span className="errMessage" >Password length should be 6 charactors long</span>
               }
               <FormGroup className={(password !== confirmPassword && confirmPassword.length > 0) || confirmPasswordError ? "inputDivError" : ""}>
                 <InputGroup className="input-group-alternative">
