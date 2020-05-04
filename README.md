@@ -2,10 +2,27 @@
 
 A expense management react application to compliment with the [expenseeve-api](https://github.com/paragpalod/expenseeve-api)  backend.
 
-All the information related to Api and app is provided in this file, directory structure of APi is provided in [expenseeve-api](https://github.com/paragpalod/expenseeve-api)
+All the information related to app is provided in this file, and information related to APIs is provided in [expenseeve-api](https://github.com/paragpalod/expenseeve-api)
+
 # Features Completed
---------------
-## Signup, Login and Logout 
+  - [x] Sign up
+  - [x] Login
+  - [x] Logout
+  - [x] Update Total Budget
+  - [x] Create Category
+  - [x] List Category
+  - [x] Delete Category
+  - [x] Restore Category
+  - [x] Create Expense
+  - [x] Edit Expense
+  - [x] List Expense (With pagination 10 entry per page)
+  - [x] Delete Expense
+  - [x] Restore Expense
+  - [x] Update Name
+  - [x] Update Username
+  - [x] Change Password
+  
+## Sign up, Login and Logout 
 
 ![Image of Signup](https://user-images.githubusercontent.com/61429014/80961331-5b4f9680-8e28-11ea-8137-c62fbf653a63.png)
 
@@ -69,6 +86,13 @@ All the information related to Api and app is provided in this file, directory s
 8. After deleting expense that row will become rey and status will become inactive to show user that this entry is deleted
 user can restore the entry using restore button
 
+## Profile (Update Name, Username, Change Password)
+
+1. On profile page update Name , Update Username and Change password is provided
+2. field validation are added for all these fields
+
+![Image for Profile](https://user-images.githubusercontent.com/61429014/80967687-601a4780-8e34-11ea-89f9-d614033e5da7.png)
+
 Platform and Editor
 --------------
 I have used Fedora 31 workstation (64 bit) for development and testing. I used Atom text editor.
@@ -77,14 +101,22 @@ Technologies/Libraries Used
 --------------
 
 1. JavaScript
-2. React Js
-3. MongoDb
-4. Node Js
-5. Bootstrap
-6. Hapi Js
+2. React Js (React hooks, react-router-dom, react-dom)
+3. Bootstrap (react-bootstrap)
+4. chart.js
+5. styled-components
+6. react-toastify
+7. axios
 
 Instructions
 --------------
-Please follow these instructions for building and running the application.
+Please follow these instructions for running the application.
 
-Clone existing git repository to download the solution and change directory to `expense-manager`
+###### APP
+- [] Install nodejs, npm ,yan on your machne
+- [] clone expenseeve-app repo from github.com/paragpalod/expenseeve-app
+- [] install all the dependencies using ```yarn```
+- [] start server using ```yarn start```
+
+
+- there is warning for ./local module not found after starting the server ignore this warning as this is related ti chart.js and it will be resoved in their next update 
