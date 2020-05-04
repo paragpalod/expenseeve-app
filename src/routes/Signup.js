@@ -102,7 +102,6 @@ function Signup (props) {
             } else if (sessionStorage.getItem('token')) {
               sessionStorage.setItem('token' , SessionInfo.data.token);
             }
-            props.history.push('/home');
           }
         } catch (Exception) {
           await API.delete('/logout');
@@ -266,7 +265,7 @@ function Signup (props) {
               :
               <div style={{textAlign: 'center'}}>
                 <div>
-                  Your account has been created successfully. Click on got to ogin button and login to your account.
+                  Your account has been created successfully. Click on go to login button and login to your account.
                 </div>
                 <div style={{fontWeight: '800', fontSize: '20px', marginTop: '30px'}}>THANK YOU!</div>
                 <div className="textCenter">

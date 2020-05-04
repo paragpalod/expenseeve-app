@@ -114,9 +114,9 @@ function Profile (props) {
         let Response = await API.put(`/changePassword` , { oldPassword , newPassword , confirmNewPassword });
         if (Response.data) {
           Toaster('Password Changed Successfully, \n Login with new password.', 'success');
-          // localStorage.clear();
-          // sessionStorage.clear();
-          // props.history.push('/')
+          localStorage.clear();
+          sessionStorage.clear();
+          props.history.push('/')
         }
       }
     } catch (Exception) {

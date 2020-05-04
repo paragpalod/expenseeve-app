@@ -8,6 +8,8 @@ import API from '../lib/api';
 import Toaster from '../lib/toaster';
 import { formatDateTime , formatDateForHtmlForm } from '../lib';
 import Chart from 'chart.js';
+let doughnutChart;
+let pieChart;
 
 const Styles = styled.div`
 
@@ -65,14 +67,34 @@ const Styles = styled.div`
 
   .expenseDoughnutChartDiv {
     width: 140px;
-    height: 140px;
-    margin-left: 50px
+    height: 10px;
+    margin-left: 50px;
+
   }
 
   .expensePieChartDiv {
     width: 270px;
     height: 140px;
     margin-left: 100px;
+  }
+
+  .card-body {
+    padding: 15px
+  }
+
+  th {
+    position: sticky;
+    top: 0px;
+    background-color: white;
+    z-index: 1;
+  }
+
+  .tableButton {
+    padding: 4px 7px;
+  }
+
+  .buttonCell {
+    padding: 5px
   }
 `;
 
@@ -90,7 +112,7 @@ function Home (props) {
 
   // for get category list functionality
   const [categoryList, setCategoryList] = useState([]);
-  const [categoryListForDeactivatedCategory, setCategoryListForDeactivatedCategory] = useState([]);
+  const [categoryListForAllCategory, setCategoryListForAllCategory] = useState([]);
 
   // for get expense list
   const [expenseList, setExpenseList] = useState([]);
@@ -104,8 +126,6 @@ function Home (props) {
 
   //for donut chart, pie chart or table exoense overview
   const [totalSpending , setTotalSpending] = useState(0);
-  const [categoryListForPieChart , setCategoryListForPieChart] = useState([]);
-  const [categoryWiseExpenseListForPieChart , setCategoryWiseExpenseListForPieChart] = useState([]);
 
   useEffect(() => {
     getCategories();
@@ -120,32 +140,20 @@ function Home (props) {
     })
     setTotalSpending(total);
 
-    function createCategoryWiseSpending () {
-      let categoryName = [];
-      let categoryWiseExpense = []
-      categoryList.map( category => {//eslint-disable-line
-        let total = 0;
-        expenseList.map( expense => {
-          if (expense.categoryID === category._id && !expense.deletedAt) {
-            total += expense.amount;
-          }
-        })
-        categoryName.push(category.name);
-        categoryWiseExpense.push(total)
-      })
-      setCategoryListForPieChart(categoryName);
-      setCategoryWiseExpenseListForPieChart(categoryWiseExpense);
-    }
-
-    if (categoryList.length < 6) {
-      createCategoryWiseSpending()
-    }
-  },[expenseList])//eslint-disable-line
+  },[expenseList ,categoryListForAllCategory])//eslint-disable-line
 
   useEffect(() => {
-    renderExpenseDoughnutChart();
-    renderExpensePieChart();
-  }, [totalSpending])//eslint-disable-line
+    if (pieChart) pieChart.destroy();
+    if (doughnutChart) doughnutChart.destroy();
+    if (userInfo && userInfo.totalBudget) {
+      renderExpenseDoughnutChart();
+    }
+
+    if (categoryListForAllCategory.length < 6 && categoryListForAllCategory.length > 0 && expenseList.length > 0) {
+      console.log({categoryListForAllCategory});
+      renderExpensePieChart();
+    }
+  }, [totalSpending, categoryListForAllCategory])//eslint-disable-line
 
   async function getCategories () {
     let Response = await API.get(`/categories?userID=${userInfo._id}&activationStatus=active`);
@@ -159,7 +167,7 @@ function Home (props) {
     let Response = await API.get(`/categories?userID=${userInfo._id}`);
 
     if (Response.data) {
-      setCategoryListForDeactivatedCategory(Response.data);
+      setCategoryListForAllCategory(Response.data);
     }
   }
 
@@ -200,7 +208,7 @@ function Home (props) {
   }
 
   function getCategoryName(categoryID) {
-    let category = categoryListForDeactivatedCategory.filter(i => i._id === categoryID)[0];
+    let category = categoryListForAllCategory.filter(i => i._id === categoryID)[0];
     return category && category.name ? category.name : '-';
   }
 
@@ -246,58 +254,67 @@ function Home (props) {
     }
   }
   function renderExpenseDoughnutChart() {
-    Chart.pluginService.register({
-      beforeDraw: function(chart) {
-        var width = chart.chart.width,
-            height = chart.chart.height,
-            ctx = chart.chart.ctx;
-
-        ctx.restore();
-        var fontSize = (height / 114).toFixed(2);
-        ctx.font = fontSize + "em sans-serif";
-        ctx.textBaseline = "middle";
-        if ((totalSpending/userInfo.totalBudget) * 100 > 0) {
-          var text = `${(totalSpending/userInfo.totalBudget) * 100} % Spent`,
-          textX = Math.round((width - ctx.measureText(text).width) / 2),
-          textY = height / 2;
-          ctx.fillText(text, textX, textY);
-          ctx.save();
+    doughnutChart = new Chart(document.getElementById('expenseDoughnutChart'), {
+      plugins:[
+        {
+          beforeDraw: (chart) => {
+            const width = chart.chart.width;
+            const height = chart.chart.height;
+            const ctx = chart.chart.ctx;
+            ctx.restore();
+            let fontSize = (height / 125).toFixed(2);
+            ctx.font = fontSize + "em sans-serif";
+            ctx.textBaseline = "middle";
+            let text = `${((userInfo.totalBudget - totalSpending) > 0) ? ((totalSpending/userInfo.totalBudget) * 100).toFixed() : 100} % Spent`,
+            textX = Math.round((width - ctx.measureText(text).width) / 2),
+            textY = height / 2;
+            ctx.fillText(text, textX, textY);
+            ctx.save();
+          }
         }
+      ],
+      type: 'doughnut',
+      data: {
+          labels: ['Spent', 'Remaning'],
+          datasets: [{
+              data: [
+                userInfo && userInfo.totalBudget && totalSpending ? totalSpending : 0,
+                totalSpending && userInfo && userInfo.totalBudget && ((userInfo.totalBudget - totalSpending) > 0) ? userInfo.totalBudget - totalSpending : 0
+              ],
+              backgroundColor: [
+                  'rgba(15, 115, 255, 1)',
+                  'rgba(199, 254, 253, 1)'
+              ],
+              borderColor: [
+                  'rgba(15, 115, 255, 1)',
+                  'rgba(199, 254, 253, 1)'
+              ],
+          }]
+      },
+      options: {
+        legend: {
+          display: false
+        },
+        cutoutPercentage: 80,
 
       }
-    });
-    new Chart(document.getElementById('expenseDoughnutChart'), {
-    type: 'doughnut',
-    data: {
-        labels: ['Budget', 'Expense'],
-        datasets: [{
-            data: [
-              userInfo && userInfo.totalBudget ? userInfo.totalBudget : 0,
-              totalSpending ? totalSpending : 0
-            ],
-            backgroundColor: [
-                'rgba(15, 115, 255, 1)',
-                'rgba(199, 254, 253, 1)'
-            ],
-            borderColor: [
-                'rgba(15, 115, 255, 1)',
-                'rgba(199, 254, 253, 1)'
-            ],
-        }]
-    },
-    options: {
-      legend: {
-        display: false
-      },
-      tooltips: {
-        enabled: false
-      },
-      cutoutPercentage: 80
-    }
   });
   }
 
   function renderExpensePieChart() {
+
+    let categoryName = [];
+    let categoryWiseExpense = []
+    categoryListForAllCategory.map( category => {//eslint-disable-line
+      let total = 0;
+      expenseList.map( expense => {//eslint-disable-line
+        if (expense.categoryID === category._id && !expense.deletedAt) {
+          total += expense.amount;
+        }
+      })
+      categoryName.push(category.name);
+      categoryWiseExpense.push(total)
+    })
 
     const colors = [
       'rgba(15, 115, 255, 1)',
@@ -305,15 +322,16 @@ function Home (props) {
       'rgba(255, 33, 33, 1)',
       'rgba(41, 255, 13, 1)',
       'rgba(233, 255, 36, 1)'
-     ]
-    new Chart(document.getElementById('expensePieChart'), {
+    ]
+
+    pieChart = new Chart(document.getElementById('expensePieChart'), {
     type: 'pie',
     data: {
-        labels: categoryListForPieChart,
+        labels: categoryName.reverse(),
         datasets: [{
-            data: categoryWiseExpenseListForPieChart,
-            backgroundColor: categoryListForPieChart.map((i,j) => colors[j]),
-            borderColor: categoryListForPieChart.map((i,j) => colors[j]),
+            data: categoryWiseExpense.reverse(),
+            backgroundColor: categoryName.map((i,j) => colors[j]),
+            borderColor: categoryName.map((i,j) => colors[j]),
         }]
     },
     options: {
@@ -336,15 +354,22 @@ function Home (props) {
               <Card.Body>
               <Row>
               <Col xs={6}>
-                <div className="expenseDoughnutChartDiv" >
-                  <canvas id="expenseDoughnutChart" width="200" height="200"></canvas>
-                </div>
+                {
+                  userInfo && userInfo.totalBudget ?
+                  <div className="expenseDoughnutChartDiv" >
+                    <canvas id="expenseDoughnutChart" width="200" height="200"></canvas>
+                  </div>
+                  :
+                  <div className="textCenter mt-5">
+                    <p>Add total budget to see percentage spent.</p>
+                  </div>
+                }
               </Col>
               <Col xs={6}>
-              <h5 className="textCenter" > Total Budget </h5>
-              <h6 className="textCenter" >₹ {userInfo && userInfo.totalBudget ? userInfo.totalBudget : ''}</h6>
-              <h5 className="textCenter" > Total Expenses </h5>
-              <h6 className="textCenter" >₹ {totalSpending ? totalSpending : 0}</h6>
+              <h5 className="textCenter pt-3 pr-3" > Total Budget </h5>
+              <h6 className="textCenter pr-3" >₹ {userInfo && userInfo.totalBudget ? userInfo.totalBudget : ''}</h6>
+              <h5 className="textCenter pr-3" > Total Expenses </h5>
+              <h6 className="textCenter pr-3" >₹ {totalSpending ? totalSpending : 0}</h6>
               </Col>
               </Row>
               </Card.Body>
@@ -355,7 +380,7 @@ function Home (props) {
               <Card.Header className="textCenter">Category wise split</Card.Header>
               <Card.Body>
               {
-                categoryList.length > 5 ?
+                categoryListForAllCategory.length > 5 ?
                 <Table>
                     <thead>
                       <tr>
@@ -366,7 +391,7 @@ function Home (props) {
                     </thead>
                     <tbody>
                     {
-                      categoryList.map ( (category , index) => (
+                      categoryListForAllCategory.map ( (category , index) => (
                           <tr key={category._id}>
                           <td>{category.name}</td>
                           <td>{getSpendingForCategory(category._id)}</td>
@@ -377,9 +402,20 @@ function Home (props) {
                     </tbody>
                 </Table>
                 :
-                <div className="expensePieChartDiv" >
-                  <canvas id="expensePieChart"></canvas>
-                </div>
+                categoryListForAllCategory.length > 0 ?
+
+                    expenseList.length > 0 ?
+                    <div className="expensePieChartDiv" >
+                      <canvas id="expensePieChart"></canvas>
+                    </div>
+                    :
+                    <div className="textCenter mt-5">
+                      <p>Add Expenses to see category wise expenses.</p>
+                    </div>
+                :
+                  <div className="textCenter mt-5">
+                    <p>Add Category to see category wise spending.</p>
+                  </div>
               }
               </Card.Body>
             </Card>
@@ -416,10 +452,12 @@ function Home (props) {
                 </thead>
                 <tbody>
                 {
-                  expenseList.slice((pageNumber-1) *3 , ((pageNumber-1) *3) + 3).map( (expense,index) => (
+                  expenseList.length ?
+                  expenseList.slice((pageNumber-1) *10 , ((pageNumber-1) *10) + 10).map( (expense,index) => (
                     <tr className={!expense.deletedAt ? '' : 'inactiveRow'} key={expense._id}>
-                      <td>
+                      <td className="buttonCell">
                         <Button
+                          className="tableButton"
                           variant="light"
                           onClick={() => {
                             setSelectedExpenseID(expense._id);
@@ -441,8 +479,9 @@ function Home (props) {
                       <td>{expense.amount}</td>
                       <td>{!expense.deletedAt ? 'Active' : 'Inactive'}</td>
                       <td>{formatDateTime(expense.date)}</td>
-                      <td>
+                      <td className="buttonCell">
                         <Button
+                          className="tableButton"
                           variant={!expense.deletedAt ? 'danger' : 'info'}
                           onClick={() => {
                             setIsConfirmationModelOpen(true);
@@ -454,6 +493,10 @@ function Home (props) {
                       </td>
                     </tr>
                   ))
+                  :
+                  <tr>
+                    <td className="textCenter" colSpan="7" >Sorry ! No expense recode found.</td>
+                  </tr>
                 }
                 </tbody>
             </Table>
@@ -464,8 +507,8 @@ function Home (props) {
         <Col>
           <Pagination>
             <Pagination.Prev disabled={pageNumber === 1} onClick={() => setPageNumber(pageNumber - 1)}/>
-            <Pagination.Item>{`${pageNumber} of ${Math.ceil(expenseList.length/3)}`}</Pagination.Item>
-            <Pagination.Next disabled={pageNumber === Math.ceil(expenseList.length/3)} onClick={() => setPageNumber(pageNumber + 1)}/>
+            <Pagination.Item>{`Page ${pageNumber} of ${Math.ceil(expenseList.length/10)}`}</Pagination.Item>
+            <Pagination.Next disabled={pageNumber === Math.ceil(expenseList.length/10)} onClick={() => setPageNumber(pageNumber + 1)}/>
           </Pagination>
         </Col>
         </Row>

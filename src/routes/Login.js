@@ -78,7 +78,6 @@ function Login (props) {
             } else if (sessionStorage.getItem('token')) {
               sessionStorage.setItem('token' , SessionInfo.data.token);
             }
-            props.history.push('/home');
           }
         } catch (Exception) {
           await API.delete('/logout');
@@ -111,7 +110,11 @@ function Login (props) {
           } else {
             sessionStorage.setItem('token' , LoginInfo.data.token);
           }
-          props.history.push('/home');
+          if (LoginInfo.data.user.totalBudget) {
+            props.history.push('/home');
+          } else {
+            props.history.push('/settings');
+          }
         }
       } catch (Exception){
         if (Exception && Exception.response) {

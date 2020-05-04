@@ -59,6 +59,21 @@ const Styles = styled.div`
     color: red;
     background-color: #c5c5c4;
   }
+
+  .buttonCell {
+    padding: 5px
+  }
+
+  .tableButton {
+    padding: 4px 7px;
+  }
+
+  th {
+    position: sticky;
+    top: 0px;
+    background-color: white;
+    z-index: 1;
+  }
 `;
 
 function Settings () {
@@ -79,6 +94,9 @@ function Settings () {
   // for activate and deactivate category functionality
   const [isConfirmationModelOpen, setIsConfirmationModelOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState({});
+
+  // checking is total budget is set or note
+  const [isTotalBudgetSet , setIsTotalBudgetSet] = useState(userInfo && userInfo.totalBudget);
 
   useEffect(() => {
     getCategories();
@@ -101,7 +119,8 @@ function Settings () {
         let BudgetUpdateResponse = await API.put(`/updateTotalBudget/${userInfo._id}` , { totalBudget });
         if (BudgetUpdateResponse.data) {
           localStorage.setItem('userInfo' , JSON.stringify(BudgetUpdateResponse.data));
-          Toaster('Budget Updated Successfully', 'success');
+          Toaster(`Budget ${isTotalBudgetSet ? 'Updated' : 'Saved'} Successfully`, 'success');
+          setIsTotalBudgetSet(true);
         }
       }
     } catch (Exception) {
@@ -185,7 +204,7 @@ function Settings () {
               variant="info"
               onClick={updateTotalBudget}
             >
-              Update
+              {isTotalBudgetSet ? 'Update' : 'Save'}
             </Button>
           </Col>
         </Row>
@@ -235,13 +254,15 @@ function Settings () {
                 </thead>
                 <tbody>
                 {
+                  categoryList.length > 0 ?
                   categoryList.map ( (category , index) => (
                     <tr className={!category.deletedAt ? '' : 'inactiveRow'} key={category._id}>
                       <td>{index+1}</td>
                       <td>{category.name}</td>
                       <td>{!category.deletedAt ? 'Active' : 'Inactive'}</td>
-                      <td >
+                      <td className="buttonCell">
                         <Button
+                          className="tableButton"
                           variant={!category.deletedAt ? 'danger' : 'info'}
                           onClick={() => {
                             setIsConfirmationModelOpen(true);
@@ -253,6 +274,10 @@ function Settings () {
                       </td>
                     </tr>
                   ))
+                  :
+                  <tr>
+                    <td className="textCenter" colSpan="4" >Sorry ! No category recode found.</td>
+                  </tr>
                 }
                 </tbody>
             </Table>
