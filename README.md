@@ -1,68 +1,85 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# expenseeve-app
 
-## Available Scripts
+A expense management react application to compliment with the [expenseeve-api](github.com/paragpalod/expenseeve-api)  backend.
 
-In the project directory, you can run:
+Tasks Completed
+--------------
+Following tasks have been completed in the give Assignment:
+![Image](https://user-images.githubusercontent.com/61429014/80960880-635b0680-8e27-11ea-91e0-db16e3f2c9a9.png)
+1. If new user Signup option has been provided .
+2. Retrieves them for display on the page. 
+3. Add a new column to the table displaying the VAT amount for each expense.
+4. Calculate the VAT client-side as the user enters a new expense, before they save the expense to the database.
+4. Added a README to contain instructions on how to build and run the app.
 
-### `yarn start`
+APIs are exposed on /api/* path. For example to get stored expensed send a get request on http://localhost:8080/api/expenses
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+Platform
+--------------
+I have used Ubuntu 14.04 64 Bit for development and testing. Eclipse and Sublime text have been used as IDEs.
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+Technologies/Libraries Used
+--------------
 
-### `yarn test`
+1. Java (1.8.0_25)
+2. MySQL (5.5.46)
+3. Dropwizard (0.9.1)
+4. Flyway (3.2.1)
+5. jsonassert (1.3.0)
+6. Maven (3.0.5)
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Pre-requisites
+--------------
+Java, MySQL and Maven should be installed
 
-### `yarn build`
+Instructions
+--------------
+Please follow these instructions for building and running the application.
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Clone existing git repository to download the solution and change directory to `expense-manager`
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+`git clone https://github.com/sanketmeghani/expense-manager.git`    
+`cd expense-manager`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Edit **config/flyway-development.properties** (configuration file for flyway) to update following properties with database configuration
 
-### `yarn eject`
+**flyway.user** - Database username  
+**flyway.password** - Database user password  
+**flyway.schemas** - Database schema name  
+**flyway.url** - MySQL JDBC URL  
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Edit **config/application-development.yml** (configuration file for dropwizard) to update following properties with database configuration
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+**database.user** - Database username  
+**database.password** - Database user password  
+**database.url** - MySQL JDBC URL with database schema name  
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Run following maven command to create database and schemas
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+`mvn compile flyway:migrate -Dflyway.configFile=config/flyway-development.properties`
 
-## Learn More
+Execute following maven command to run test cases
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+`mvn clean test`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Executed following maven command to build and package application as a fat executable jar
 
-### Code Splitting
+`mvn clean package`
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+Execute following command to deploy application on localhost
 
-### Analyzing the Bundle Size
+`java -jar target/expense-manager-1.0.jar server config/application-development.yml`
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+Server logs are available in **log/application.log** and request logs are available in **log/access.log**  
 
-### Making a Progressive Web App
+Application could be accessed by visting [http://localhost:8080](http://localhost:8080)
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
 
-### Advanced Configuration
+Note
+--------------
+I have updated **src/main/resources/assets/src/js/apps/codingtest/expenses/expenses-controller.js** and **src/main/resources/assets/src/js/apps/codingtest/partials/expenses-content.html**. Hence you may need to rebuild client bundle if deploying in other than development mode.
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
+Follow these steps to rebuild client bundle.
 
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+`cd src/main/resources/assets`  
+`gulp build` (You may need to insrall gulp, npm if it is not already installed. Execute `npm install gulp -g` and `npm install` to install node modules dependencies before executing this command)
