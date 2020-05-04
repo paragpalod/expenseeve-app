@@ -47,7 +47,7 @@ const Styles = styled.div`
   .expenseTable {
     margin: 0px auto;
     width: 1060px;
-    height: 255px;
+    height: 250px;
     overflow: scroll;
   }
 
@@ -278,8 +278,8 @@ function Home (props) {
           labels: ['Spent', 'Remaning'],
           datasets: [{
               data: [
-                userInfo && userInfo.totalBudget && totalSpending ? totalSpending : 0,
-                totalSpending && userInfo && userInfo.totalBudget && ((userInfo.totalBudget - totalSpending) > 0) ? userInfo.totalBudget - totalSpending : 0
+                userInfo && userInfo.totalBudget && totalSpending >= 0 ? totalSpending : 0,
+                totalSpending >= 0 && userInfo && userInfo.totalBudget && ((userInfo.totalBudget - totalSpending) > 0) ? userInfo.totalBudget - totalSpending : 0
               ],
               backgroundColor: [
                   'rgba(15, 115, 255, 1)',
