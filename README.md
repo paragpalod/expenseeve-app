@@ -1,6 +1,6 @@
 # expenseeve-app
 
-A expense management react application to compliment with the [expenseeve-api](https://github.com/paragpalod/expenseeve-api)  backend.
+An expense management react application to compliment with the [expenseeve-api](https://github.com/paragpalod/expenseeve-api)  backend.
 
 All the information related to app is provided in this file, and information related to APIs is provided in [expenseeve-api](https://github.com/paragpalod/expenseeve-api)
 
